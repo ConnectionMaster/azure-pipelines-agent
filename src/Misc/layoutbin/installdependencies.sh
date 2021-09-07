@@ -72,8 +72,8 @@ then
                 exit 1
             fi
 
-            # libicu versions: libicu66 -> libicu63 -> libicu60 -> libicu57 -> libicu55 -> libicu52
-            apt install -y libicu66 || apt install -y libicu63 || apt install -y libicu60 || apt install -y libicu57 || apt install -y libicu55 || apt install -y libicu52
+            # libicu versions: libicu67 -> libicu66 -> libicu63 -> libicu60 -> libicu57 -> libicu55 -> libicu52
+            apt install -y libicu67 || apt install -y libicu66 || apt install -y libicu63 || apt install -y libicu60 || apt install -y libicu57 || apt install -y libicu55 || apt install -y libicu52
             if [ $? -ne 0 ]
             then
                 echo "'apt' failed with exit code '$?'"
@@ -103,8 +103,8 @@ then
                     exit 1
                 fi
 
-                # libicu versions: libicu66 -> libicu63 -> libicu60 -> libicu57 -> libicu55 -> libicu52
-                apt-get install -y libicu66 || apt-get install -y libicu63 || apt-get install -y libicu60 || apt-get install -y libicu57 || apt-get install -y libicu55 || apt-get install -y libicu52
+                # libicu versions: libicu67 -> libicu66 -> libicu63 -> libicu60 -> libicu57 -> libicu55 -> libicu52
+                apt-get install -y libicu67 || apt-get install -y libicu66 || apt-get install -y libicu63 || apt-get install -y libicu60 || apt-get install -y libicu57 || apt-get install -y libicu55 || apt-get install -y libicu52
                 if [ $? -ne 0 ]
                 then
                     echo "'apt-get' failed with exit code '$?'"
@@ -195,7 +195,7 @@ then
                 fi
 
                 # install lttng-ust separately since it's not part of offical package repository
-                yum install -y wget && wget -P /etc/yum.repos.d/ https://packages.efficios.com/repo.files/EfficiOS-RHEL7-x86-64.repo && rpmkeys --import https://packages.efficios.com/rhel/repo.key && yum updateinfo && yum install -y lttng-ust
+                yum install -y wget && wget -P /etc/yum.repos.d/ https://packages.efficios.com/repo.files/EfficiOS-RHEL7-x86-64.repo && rpmkeys --import https://packages.efficios.com/rhel/repo.key && yum updateinfo -y && yum install -y lttng-ust
                 if [ $? -ne 0 ]
                 then                    
                     echo "'lttng-ust' installation failed with exit code '$?'"
@@ -209,16 +209,31 @@ then
             fi
         fi
     else
+
         # we might on OpenSUSE
         OSTYPE=$(grep ID_LIKE /etc/os-release | cut -f2 -d=)
+        if [ -z $OSTYPE ]
+        then
+            OSTYPE=$(grep ID /etc/os-release | cut -f2 -d=)
+        fi
         echo $OSTYPE
-        if [ $OSTYPE == '"suse"' ]
+
+        # is_sles=1 if it is a SLES OS
+        [ -n $OSTYPE ] && ([ $OSTYPE == '"sles"' ] || [ $OSTYPE == '"sles_sap"' ]) && is_sles=1
+
+        if  [[ -n $OSTYPE && ( $OSTYPE == '"suse"'  || $is_sles == 1) ]]
         then
             echo "The current OS is SUSE based"
             command -v zypper
             if [ $? -eq 0 ]
             then
-                zypper -n install lttng-ust libopenssl1_0_0 krb5 zlib libicu52_1
+                if [[ -n $is_sles ]]
+                then
+                    zypper -n install lttng-ust libopenssl1_1 krb5 zlib libicu
+                else
+                    zypper -n install lttng-ust libopenssl1_0_0 krb5 zlib libicu
+                fi
+
                 if [ $? -ne 0 ]
                 then
                     echo "'zypper' failed with exit code '$?'"

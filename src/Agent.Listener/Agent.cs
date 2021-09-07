@@ -222,7 +222,7 @@ namespace Microsoft.VisualStudio.Services.Agent.Listener
                         }
                         else
                         {
-                            Trace.Info($"Autologon is configured on the machine but current Agent.Listner.exe is launched from the windows service");
+                            Trace.Info($"Autologon is configured on the machine but current Agent.Listener.exe is launched from the windows service");
                         }
                     }
                 }
@@ -453,6 +453,11 @@ namespace Microsoft.VisualStudio.Services.Agent.Listener
                                 {
                                     Trace.Info($"Skip message deletion for cancellation message '{message.MessageId}'.");
                                 }
+                            }
+                            else if (string.Equals(message.MessageType, JobMetadataMessage.MessageType, StringComparison.OrdinalIgnoreCase))
+                            {
+                                var metadataMessage = JsonUtility.FromString<JobMetadataMessage>(message.Body);
+                                jobDispatcher.MetadataUpdate(metadataMessage);
                             }
                             else
                             {
